@@ -1,23 +1,18 @@
-import { useEffect } from 'react';
 import { useGame } from '../../hooks/useGame';
 
 export function GameControls() {
   const { state, endTurn, newGame, clearMessage } = useGame();
   const { phase, winner, message } = state;
 
-  // Auto-clear message after 3 seconds
-  useEffect(() => {
-    if (message) {
-      const timer = setTimeout(clearMessage, 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [message, clearMessage]);
-
   return (
     <div className="flex flex-col gap-4">
       {message && (
-        <div className="text-center p-3 bg-blue-100 text-blue-800 rounded-lg animate-pulse">
+        <div
+          onClick={clearMessage}
+          className="text-center p-3 bg-blue-100 text-blue-800 rounded-lg cursor-pointer hover:bg-blue-200 transition-colors relative group"
+        >
           {message}
+          <span className="ml-2 text-blue-600 group-hover:text-blue-800">×</span>
         </div>
       )}
 

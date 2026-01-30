@@ -1,5 +1,5 @@
+import { DragEvent } from 'react';
 import { useGame } from '../../hooks/useGame';
-import { Checker } from '../Checker';
 import { Player } from '../../game/types';
 
 interface BearOffProps {
@@ -8,10 +8,11 @@ interface BearOffProps {
 
 export function BearOff({ player }: BearOffProps) {
   const { state, makeMove } = useGame();
-  const { borneOff, validMoves, phase } = state;
+  const { borneOff, validMoves, phase, currentPlayer } = state;
 
   const count = borneOff[player];
-  const isValidDestination = validMoves.some((m) => m.to === 'off');
+  // Only show as valid destination for the current player's bear-off tray
+  const isValidDestination = player === currentPlayer && validMoves.some((m) => m.to === 'off');
   const moveToHere = validMoves.find((m) => m.to === 'off');
 
   const handleClick = () => {
@@ -19,9 +20,25 @@ export function BearOff({ player }: BearOffProps) {
     makeMove(moveToHere);
   };
 
+  const handleDragOver = (e: DragEvent) => {
+    if (isValidDestination) {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+    }
+  };
+
+  const handleDrop = (e: DragEvent) => {
+    e.preventDefault();
+    if (isValidDestination && moveToHere) {
+      makeMove(moveToHere);
+    }
+  };
+
   return (
     <div
       onClick={handleClick}
+      onDragOver={handleDragOver}
+      onDrop={handleDrop}
       className={`
         w-12 min-h-[100px] bg-gray-800 rounded-lg
         flex flex-col items-center justify-end p-2

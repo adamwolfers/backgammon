@@ -27,15 +27,16 @@ function handleRollDice(state: GameState): GameState {
   // Calculate required moves (enforcing forced move rules)
   const validMoves = getRequiredMoves(newState);
 
-  // If no valid moves, auto-end turn with message
+  // If no valid moves, auto-end turn with message showing rolled dice
   if (validMoves.length === 0) {
+    const diceStr = newDice.values ? `${newDice.values[0]}-${newDice.values[1]}` : '';
     return {
       ...newState,
       currentPlayer: switchPlayer(state.currentPlayer),
       phase: 'rolling',
       dice: initializeDiceState(),
       validMoves: [],
-      message: `${state.currentPlayer} has no valid moves - turn skipped`,
+      message: `${state.currentPlayer} rolled ${diceStr} but has no valid moves - turn skipped`,
     };
   }
 
@@ -165,6 +166,7 @@ function handleMakeMove(state: GameState, move: Move): GameState {
   const remainingMoves = getRequiredMoves(newState);
   if (newDice.remaining.length === 0 || remainingMoves.length === 0) {
     const noMovesLeft = newDice.remaining.length > 0 && remainingMoves.length === 0;
+    const unusedDice = newDice.remaining.join(', ');
     return {
       ...newState,
       currentPlayer: switchPlayer(currentPlayer),
@@ -172,7 +174,7 @@ function handleMakeMove(state: GameState, move: Move): GameState {
       dice: initializeDiceState(),
       turnMoves: [],
       validMoves: [],
-      message: noMovesLeft ? `${currentPlayer} has no more valid moves` : null,
+      message: noMovesLeft ? `${currentPlayer} cannot use remaining dice (${unusedDice})` : null,
     };
   }
 

@@ -1,4 +1,5 @@
-import { PointState, Move } from '../../game/types';
+import { DragEvent } from 'react';
+import { PointState } from '../../game/types';
 import { Checker } from '../Checker';
 import { useGame } from '../../hooks/useGame';
 
@@ -19,6 +20,12 @@ export function Point({ pointNumber, state, isTop }: PointProps) {
   const isOdd = pointNumber % 2 === 1;
   const triangleColor = isOdd ? 'border-point-dark' : 'border-point-light';
 
+  // Can this point be dragged from?
+  const canDrag = phase === 'moving' &&
+    state.player === currentPlayer &&
+    state.count > 0 &&
+    gameState.bar[currentPlayer] === 0; // Can't drag if checker on bar
+
   const handleClick = () => {
     if (phase !== 'moving') return;
 
@@ -34,18 +41,40 @@ export function Point({ pointNumber, state, isTop }: PointProps) {
     }
   };
 
+  const handleDragStart = (e: DragEvent) => {
+    if (!canDrag) {
+      e.preventDefault();
+      return;
+    }
+    e.dataTransfer.setData('text/plain', String(pointNumber));
+    e.dataTransfer.effectAllowed = 'move';
+    // Select point to show valid moves
+    selectPoint(pointNumber);
+  };
+
+  const handleDragOver = (e: DragEvent) => {
+    if (isValidDestination) {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+    }
+  };
+
+  const handleDrop = (e: DragEvent) => {
+    e.preventDefault();
+    if (isValidDestination && moveToHere) {
+      makeMove(moveToHere);
+    }
+  };
+
   // Render checkers - compress when 5+ to avoid overlap with opposing point
   const maxDisplay = 6;
   const displayCount = Math.min(state.count, maxDisplay);
 
-  // Calculate spacing: full size (32px) for few checkers, compressed for many
-  // Point height is 128px, leave some margin
-  const maxHeight = 118; // px available for checkers
-  const checkerSize = 32; // h-8 = 32px
-  const fullSpacing = checkerSize + 2; // checker + small gap
+  // Calculate spacing
+  const maxHeight = 118;
+  const checkerSize = 32;
+  const fullSpacing = checkerSize + 2;
   const neededHeight = displayCount * fullSpacing;
-
-  // If checkers would overflow, compress them
   const spacing = neededHeight > maxHeight
     ? Math.floor(maxHeight / displayCount)
     : fullSpacing;
@@ -53,6 +82,8 @@ export function Point({ pointNumber, state, isTop }: PointProps) {
   return (
     <div
       onClick={handleClick}
+      onDragOver={handleDragOver}
+      onDrop={handleDrop}
       className={`
         relative w-10 h-32 flex flex-col
         ${isTop ? 'items-center justify-start' : 'items-center justify-end'}
@@ -82,11 +113,17 @@ export function Point({ pointNumber, state, isTop }: PointProps) {
               ? { top: offset }
               : { bottom: offset };
 
+            // Only the top checker is draggable
+            const isTopChecker = isTop ? i === displayCount - 1 : i === displayCount - 1;
+            const isDraggable = canDrag && isTopChecker;
+
             return (
               <div
                 key={i}
-                className="absolute left-0"
+                className={`absolute left-0 ${isDraggable ? 'cursor-grab active:cursor-grabbing' : ''}`}
                 style={positionStyle}
+                draggable={isDraggable}
+                onDragStart={isDraggable ? handleDragStart : undefined}
               >
                 <Checker
                   player={state.player!}
@@ -97,7 +134,7 @@ export function Point({ pointNumber, state, isTop }: PointProps) {
           })}
       </div>
 
-      {/* Point number (for debugging, can be removed) */}
+      {/* Point number */}
       <div
         className={`
           absolute ${isTop ? 'bottom-0' : 'top-0'}
