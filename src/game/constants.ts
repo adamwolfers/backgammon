@@ -51,6 +51,7 @@ export function createInitialState(): GameState {
     validMoves: [],
     turnMoves: [],
     message: null,
+    turnStartSnapshot: null,
   };
 }
 

@@ -22,6 +22,13 @@ export interface Move {
 
 export type GamePhase = 'rolling' | 'moving' | 'gameOver';
 
+export interface TurnSnapshot {
+  points: PointState[];
+  bar: { white: number; black: number };
+  borneOff: { white: number; black: number };
+  dice: DiceState;
+}
+
 export interface GameState {
   points: PointState[];          // 24 points, index 0 = point 1
   bar: { white: number; black: number };
@@ -34,6 +41,7 @@ export interface GameState {
   validMoves: Move[];            // Currently valid moves for selected piece
   turnMoves: Move[];             // Moves made this turn (for undo)
   message: string | null;        // Notification message for player
+  turnStartSnapshot: TurnSnapshot | null;  // State at turn start for undo
 }
 
 export type GameAction =

@@ -1,8 +1,21 @@
-import { GameState, GameAction, Move, Player } from './types';
+import { GameState, GameAction, Move, Player, TurnSnapshot } from './types';
 import { createInitialState, CHECKERS_PER_PLAYER } from './constants';
 import { rollDice, useDie, initializeDiceState } from './diceLogic';
 import { calculateValidMoves } from './moveCalculation';
 import { getRequiredMoves } from './forcedMoves';
+
+function createTurnSnapshot(state: GameState): TurnSnapshot {
+  return {
+    points: state.points.map((p) => ({ ...p })),
+    bar: { ...state.bar },
+    borneOff: { ...state.borneOff },
+    dice: {
+      values: state.dice.values,
+      remaining: [...state.dice.remaining],
+      rolled: state.dice.rolled,
+    },
+  };
+}
 
 function switchPlayer(player: Player): Player {
   return player === 'white' ? 'black' : 'white';
@@ -37,13 +50,18 @@ function handleRollDice(state: GameState): GameState {
       dice: initializeDiceState(),
       validMoves: [],
       message: `${state.currentPlayer} rolled ${diceStr} but has no valid moves - turn skipped`,
+      turnStartSnapshot: null,
     };
   }
+
+  // Save snapshot for undo
+  const snapshot = createTurnSnapshot(newState);
 
   return {
     ...newState,
     validMoves,
     message: null,
+    turnStartSnapshot: snapshot,
   };
 }
 
@@ -175,6 +193,7 @@ function handleMakeMove(state: GameState, move: Move): GameState {
       turnMoves: [],
       validMoves: [],
       message: noMovesLeft ? `${currentPlayer} cannot use remaining dice (${unusedDice})` : null,
+      turnStartSnapshot: null,
     };
   }
 
@@ -193,6 +212,39 @@ function handleEndTurn(state: GameState): GameState {
     turnMoves: [],
     selectedPoint: null,
     validMoves: [],
+    turnStartSnapshot: null,
+  };
+}
+
+function handleUndoMove(state: GameState): GameState {
+  // Can only undo during moving phase with moves made
+  if (state.phase !== 'moving' || !state.turnStartSnapshot || state.turnMoves.length === 0) {
+    return state;
+  }
+
+  const snapshot = state.turnStartSnapshot;
+
+  // Restore the state from snapshot
+  const restoredState: GameState = {
+    ...state,
+    points: snapshot.points.map((p) => ({ ...p })),
+    bar: { ...snapshot.bar },
+    borneOff: { ...snapshot.borneOff },
+    dice: {
+      values: snapshot.dice.values,
+      remaining: [...snapshot.dice.remaining],
+      rolled: snapshot.dice.rolled,
+    },
+    turnMoves: [],
+    selectedPoint: null,
+  };
+
+  // Recalculate valid moves
+  const validMoves = getRequiredMoves(restoredState);
+
+  return {
+    ...restoredState,
+    validMoves,
   };
 }
 
@@ -210,6 +262,8 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       return handleMakeMove(state, action.move);
     case 'END_TURN':
       return handleEndTurn(state);
+    case 'UNDO_MOVE':
+      return handleUndoMove(state);
     case 'NEW_GAME':
       return handleNewGame();
     case 'CLEAR_MESSAGE':

@@ -9,6 +9,7 @@ interface GameContextValue {
   selectPoint: (point: number | 'bar') => void;
   makeMove: (move: Move) => void;
   endTurn: () => void;
+  undoMove: () => void;
   newGame: () => void;
   clearMessage: () => void;
 }
@@ -28,6 +29,7 @@ export function GameProvider({ children }: GameProviderProps) {
     selectPoint: (point) => dispatch({ type: 'SELECT_POINT', point }),
     makeMove: (move) => dispatch({ type: 'MAKE_MOVE', move }),
     endTurn: () => dispatch({ type: 'END_TURN' }),
+    undoMove: () => dispatch({ type: 'UNDO_MOVE' }),
     newGame: () => dispatch({ type: 'NEW_GAME' }),
     clearMessage: () => dispatch({ type: 'CLEAR_MESSAGE' }),
   };
