@@ -10,6 +10,7 @@ interface GameContextValue {
   makeMove: (move: Move) => void;
   endTurn: () => void;
   newGame: () => void;
+  clearMessage: () => void;
 }
 
 export const GameContext = createContext<GameContextValue | null>(null);
@@ -28,6 +29,7 @@ export function GameProvider({ children }: GameProviderProps) {
     makeMove: (move) => dispatch({ type: 'MAKE_MOVE', move }),
     endTurn: () => dispatch({ type: 'END_TURN' }),
     newGame: () => dispatch({ type: 'NEW_GAME' }),
+    clearMessage: () => dispatch({ type: 'CLEAR_MESSAGE' }),
   };
 
   return <GameContext.Provider value={value}>{children}</GameContext.Provider>;

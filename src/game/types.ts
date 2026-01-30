@@ -33,6 +33,7 @@ export interface GameState {
   selectedPoint: number | 'bar' | null;  // 1-24, 'bar', or null
   validMoves: Move[];            // Currently valid moves for selected piece
   turnMoves: Move[];             // Moves made this turn (for undo)
+  message: string | null;        // Notification message for player
 }
 
 export type GameAction =
@@ -41,4 +42,5 @@ export type GameAction =
   | { type: 'MAKE_MOVE'; move: Move }
   | { type: 'END_TURN' }
   | { type: 'UNDO_MOVE' }
-  | { type: 'NEW_GAME' };
+  | { type: 'NEW_GAME' }
+  | { type: 'CLEAR_MESSAGE' };

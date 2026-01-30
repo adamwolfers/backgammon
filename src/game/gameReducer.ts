@@ -1,7 +1,8 @@
 import { GameState, GameAction, Move, Player } from './types';
 import { createInitialState, CHECKERS_PER_PLAYER } from './constants';
 import { rollDice, useDie, initializeDiceState } from './diceLogic';
-import { calculateValidMoves, calculateAllMoves } from './moveCalculation';
+import { calculateValidMoves } from './moveCalculation';
+import { getRequiredMoves } from './forcedMoves';
 
 function switchPlayer(player: Player): Player {
   return player === 'white' ? 'black' : 'white';
@@ -23,10 +24,10 @@ function handleRollDice(state: GameState): GameState {
     phase: 'moving',
   };
 
-  // Calculate all valid moves for the new state
-  const validMoves = calculateAllMoves(newState);
+  // Calculate required moves (enforcing forced move rules)
+  const validMoves = getRequiredMoves(newState);
 
-  // If no valid moves, auto-end turn
+  // If no valid moves, auto-end turn with message
   if (validMoves.length === 0) {
     return {
       ...newState,
@@ -34,12 +35,14 @@ function handleRollDice(state: GameState): GameState {
       phase: 'rolling',
       dice: initializeDiceState(),
       validMoves: [],
+      message: `${state.currentPlayer} has no valid moves - turn skipped`,
     };
   }
 
   return {
     ...newState,
     validMoves,
+    message: null,
   };
 }
 
@@ -51,7 +54,7 @@ function handleSelectPoint(state: GameState, point: number | 'bar'): GameState {
     return {
       ...state,
       selectedPoint: null,
-      validMoves: calculateAllMoves(state),
+      validMoves: getRequiredMoves(state),
     };
   }
 
@@ -71,7 +74,21 @@ function handleSelectPoint(state: GameState, point: number | 'bar'): GameState {
     }
   }
 
-  const validMoves = calculateValidMoves(state, point);
+  // Get moves for this point, filtered by forced move rules
+  const pointMoves = calculateValidMoves(state, point);
+  const requiredMoves = getRequiredMoves(state);
+
+  // Only show moves from this point that are in the required moves
+  const validMoves = pointMoves.filter((pm) =>
+    requiredMoves.some(
+      (rm) => rm.from === pm.from && rm.to === pm.to && rm.dieUsed === pm.dieUsed
+    )
+  );
+
+  // If no valid moves from this point under forced rules, don't select
+  if (validMoves.length === 0) {
+    return state;
+  }
 
   return {
     ...state,
@@ -145,8 +162,9 @@ function handleMakeMove(state: GameState, move: Move): GameState {
   }
 
   // Check if turn should end (no dice remaining or no valid moves)
-  const remainingMoves = calculateAllMoves(newState);
+  const remainingMoves = getRequiredMoves(newState);
   if (newDice.remaining.length === 0 || remainingMoves.length === 0) {
+    const noMovesLeft = newDice.remaining.length > 0 && remainingMoves.length === 0;
     return {
       ...newState,
       currentPlayer: switchPlayer(currentPlayer),
@@ -154,6 +172,7 @@ function handleMakeMove(state: GameState, move: Move): GameState {
       dice: initializeDiceState(),
       turnMoves: [],
       validMoves: [],
+      message: noMovesLeft ? `${currentPlayer} has no more valid moves` : null,
     };
   }
 
@@ -191,6 +210,8 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       return handleEndTurn(state);
     case 'NEW_GAME':
       return handleNewGame();
+    case 'CLEAR_MESSAGE':
+      return { ...state, message: null };
     default:
       return state;
   }

@@ -50,6 +50,7 @@ export function createInitialState(): GameState {
     selectedPoint: null,
     validMoves: [],
     turnMoves: [],
+    message: null,
   };
 }
 
