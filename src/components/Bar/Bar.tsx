@@ -37,7 +37,7 @@ export function Bar() {
       {/* White checkers on bar (top) */}
       {bar.white > 0 && (
         <div
-          className={`flex flex-col items-center gap-1 ${currentPlayer === 'white' && canDrag ? 'cursor-grab active:cursor-grabbing' : ''}`}
+          className={`flex flex-col items-center gap-1 ${currentPlayer === 'white' && canDrag ? 'cursor-grab active:cursor-grabbing checker-interactive' : ''}`}
           draggable={currentPlayer === 'white' && canDrag}
           onDragStart={(e) => handleDragStart(e, 'white')}
         >
@@ -48,7 +48,7 @@ export function Bar() {
       {/* Black checkers on bar (bottom) */}
       {bar.black > 0 && (
         <div
-          className={`flex flex-col items-center gap-1 ${currentPlayer === 'black' && canDrag ? 'cursor-grab active:cursor-grabbing' : ''}`}
+          className={`flex flex-col items-center gap-1 ${currentPlayer === 'black' && canDrag ? 'cursor-grab active:cursor-grabbing checker-interactive' : ''}`}
           draggable={currentPlayer === 'black' && canDrag}
           onDragStart={(e) => handleDragStart(e, 'black')}
         >

@@ -42,7 +42,7 @@ export function BearOff({ player }: BearOffProps) {
       className={`
         w-12 min-h-[100px] bg-gray-800 rounded-lg
         flex flex-col items-center justify-end p-2
-        ${isValidDestination ? 'ring-2 ring-green-400 cursor-pointer' : ''}
+        ${isValidDestination ? 'ring-2 ring-green-400 cursor-pointer valid-move-highlight' : ''}
       `}
     >
       {/* Stack representation of borne off checkers */}

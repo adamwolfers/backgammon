@@ -89,7 +89,7 @@ export function Point({ pointNumber, state, isTop }: PointProps) {
         ${isTop ? 'items-center justify-start' : 'items-center justify-end'}
         cursor-pointer
         ${isSelected ? 'bg-blue-200' : ''}
-        ${isValidDestination ? 'bg-valid-move' : ''}
+        ${isValidDestination ? 'valid-move-highlight' : ''}
       `}
     >
       {/* Triangle */}
@@ -120,7 +120,7 @@ export function Point({ pointNumber, state, isTop }: PointProps) {
             return (
               <div
                 key={i}
-                className={`absolute left-0 ${isDraggable ? 'cursor-grab active:cursor-grabbing' : ''}`}
+                className={`absolute left-0 ${isDraggable ? 'cursor-grab active:cursor-grabbing checker-interactive' : ''}`}
                 style={positionStyle}
                 draggable={isDraggable}
                 onDragStart={isDraggable ? handleDragStart : undefined}

@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { useGame } from '../../hooks/useGame';
 
 const dotPositions: Record<number, number[][]> = {
@@ -12,9 +13,10 @@ const dotPositions: Record<number, number[][]> = {
 interface DieProps {
   value: number;
   used?: boolean;
+  rolling?: boolean;
 }
 
-function Die({ value, used = false }: DieProps) {
+function Die({ value, used = false, rolling = false }: DieProps) {
   const positions = dotPositions[value] || [];
 
   return (
@@ -23,6 +25,8 @@ function Die({ value, used = false }: DieProps) {
         w-12 h-12 bg-white rounded-lg shadow-lg
         grid grid-cols-3 grid-rows-3 p-1.5 gap-0.5
         ${used ? 'opacity-30' : ''}
+        ${rolling ? 'animate-dice-roll' : ''}
+        transition-opacity duration-200
       `}
     >
       {[0, 1, 2].map((row) =>
@@ -43,15 +47,24 @@ function Die({ value, used = false }: DieProps) {
 
 export function Dice() {
   const { state, rollDice } = useGame();
-  const { dice, phase, currentPlayer } = state;
+  const { dice, phase } = state;
+
+  const [isRolling, setIsRolling] = useState(false);
+
+  // Trigger roll animation when dice values appear
+  useEffect(() => {
+    if (dice.values && dice.rolled) {
+      setIsRolling(true);
+      const timer = setTimeout(() => setIsRolling(false), 300);
+      return () => clearTimeout(timer);
+    }
+  }, [dice.values, dice.rolled]);
 
   const canRoll = phase === 'rolling';
 
   // Calculate which dice have been used
   const usedDice = dice.values
     ? dice.values.map((v, i) => {
-        const remainingCount = dice.remaining.filter((r) => r === v).length;
-        const originalCount = dice.values!.filter((d) => d === v).length;
         // For doubles, we need more complex logic
         if (dice.values![0] === dice.values![1]) {
           // Doubles: 4 uses total
@@ -68,8 +81,8 @@ export function Dice() {
       <div className="flex gap-4">
         {dice.values ? (
           <>
-            <Die value={dice.values[0]} used={usedDice[0]} />
-            <Die value={dice.values[1]} used={usedDice[1]} />
+            <Die value={dice.values[0]} used={usedDice[0]} rolling={isRolling} />
+            <Die value={dice.values[1]} used={usedDice[1]} rolling={isRolling} />
           </>
         ) : (
           <>
